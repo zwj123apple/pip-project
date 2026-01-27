@@ -1,0 +1,21 @@
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.1.1
+
+# Authentication & Security
+PyJWT==2.8.0
+bcrypt==4.1.2
+cryptography==41.0.7
+
+# Data Validation
+pydantic==2.5.3
+
+# Configuration
+python-dotenv==1.0.0
+
+# Database
+PyMySQL==1.1.0
+
+# Production Server
+gunicorn==21.2.0
