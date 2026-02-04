@@ -1,0 +1,36 @@
+# Docker Compose配置 - 测试环境
+version: "3.8"
+
+services:
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pip-backend-test
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=testing
+      - TESTING=1
+      - DATABASE_URL=sqlite:///test.db
+      - SECRET_KEY=test-secret-key
+      - JWT_SECRET_KEY=test-jwt-secret
+    networks:
+      - test-network
+    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "run:app"]
+
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pip-frontend-test
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend-test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
