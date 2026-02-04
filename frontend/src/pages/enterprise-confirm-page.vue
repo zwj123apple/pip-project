@@ -54,7 +54,14 @@
         <div class="info-row">
           <div class="info-field">
             <label>Loan Amount</label>
-            <div class="field-value">{{ loanData.loanAmount || "" }}</div>
+            <div class="field-value">
+              {{
+                loanData.loanAmount !== null &&
+                loanData.loanAmount !== undefined
+                  ? loanData.loanAmount
+                  : ""
+              }}
+            </div>
           </div>
         </div>
 
@@ -180,12 +187,16 @@ const createFormData = () => {
 
   // 添加表单字段
   Object.keys(backendData).forEach((key) => {
+    const value = backendData[key];
+    // 修复：0 也应该被添加，只排除 null, undefined, 空字符串，以及特殊字段
     if (
-      backendData[key] &&
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
       key !== "financialData" &&
       key !== "propProofDocsPath"
     ) {
-      formData.append(key, backendData[key]);
+      formData.append(key, value);
     }
   });
 
@@ -212,8 +223,13 @@ const handleError = (error) => {
     const errors = errorData.data?.errors;
 
     if (errors && Array.isArray(errors)) {
-      const errorMessages = errors.map((err) => err.msg).join("; ");
-      ElMessage.error(errorMessages || "操作失败，请稍后重试");
+      // 使用HTML换行符连接多个错误消息
+      const errorMessages = errors.map((err) => err.msg).join("<br>");
+      ElMessage.error({
+        message: errorMessages || "操作失败，请稍后重试",
+        dangerouslyUseHTMLString: true,
+        duration: 5000,
+      });
     } else {
       ElMessage.error(
         errorData.message || errorData.msg || "操作失败，请稍后重试",

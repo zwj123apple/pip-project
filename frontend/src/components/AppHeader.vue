@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header" v-if="isLoggedIn">
+  <header class="app-header" v-if="route.name !== 'Login' && isLoggedIn">
     <div class="header-container">
       <div class="header-left">
         <h1 class="logo">金融贷款系统</h1>
@@ -36,7 +36,9 @@ import { useUserStore } from "@/store/user-store";
 import { ElMessageBox } from "element-plus";
 import { SwitchButton } from "@element-plus/icons-vue";
 import { authApi } from "@/api/auth";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const userStore = useUserStore();
 const loading = ref(false);
 

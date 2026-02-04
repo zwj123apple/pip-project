@@ -33,8 +33,8 @@ def format_validation_errors(validation_errors):
             msg = f'{field} 必须是文本类型'
         elif 'float_type' in error_type or 'int_type' in error_type:
             msg = f'{field} 必须是数字'
-        elif 'greater_than' in error_type:
-            msg = f'{field} 必须大于0'
+        elif 'greater_than' in error_type or 'greater_than_equal' in error_type:
+            msg = f'{field} 不能为负数'
         elif 'string_too_short' in error_type or 'string_too_long' in error_type:
             msg = f'{field} 长度不符合要求'
         else:
@@ -114,30 +114,30 @@ def validate_and_upload():
     需要认证
     """
     try:
-        # 获取表单数据
+        # 1. 获取表单数据
         data = request.form.to_dict()
         
-        # 检查文件是否上传
-        file = request.files.get('prop_proof_docs')
-        if not file or not file.filename:
-            return ApiResponse.file_error('请上传财产证明文件')
-        
-        # 添加文件占位符以通过Pydantic验证
+        # 2. 添加文件占位符以通过Pydantic验证（先验证表单数据）
         data['prop_proof_docs'] = 'temp_file_path'
-        data['prop_proof_docs_name'] = file.filename
+        data['prop_proof_docs_name'] = 'temp_filename'
         
-        # 统一的数据校验（Pydantic验证 + 业务规则验证）
+        # 3. 先验证表单数据（Pydantic验证 + 业务规则验证）
         loan_data, errors = validate_loan_data(data)
         if errors:
             return ApiResponse.validation_error('数据验证失败，请检查输入信息', errors)
         
-        # 上传文件
+        # 4. 表单验证通过后，再检查文件是否上传
+        file = request.files.get('prop_proof_docs')
+        if not file or not file.filename:
+            return ApiResponse.file_error('请上传财产证明文件')
+        
+        # 5. 上传文件
         try:
             file_info = LoanService.upload_file_only(file)
         except Exception as file_error:
             return ApiResponse.file_error(f'文件上传失败: {str(file_error)}')
         
-        # 获取财务图表数据
+        # 6. 获取财务图表数据
         financial_data = LoanService.get_chart_data()
         
         return ApiResponse.success(

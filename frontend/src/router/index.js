@@ -74,7 +74,7 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  if ((to.path === "/login" || to.path === "/register") && token) {
+  if (to.path === "/login" && token) {
     if (userInfo?.user_type === "INDIVIDUAL") {
       next("/personal");
     } else if (userInfo?.user_type === "ENTERPRISE") {

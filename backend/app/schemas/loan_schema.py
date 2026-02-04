@@ -17,7 +17,7 @@ class LoanApplicationCreate(BaseModel):
     repay_account_no: str = Field(..., min_length=19, max_length=19, description="还款账户号码")
 
     # 贷款信息
-    loan_amount: float = Field(..., gt=0, description="贷款申请金额")
+    loan_amount: float = Field(..., ge=0, description="贷款申请金额")
     loan_term: str = Field(..., min_length=1, description="期限")
     loan_purpose: str = Field(..., min_length=1, description="贷款目的")
     prop_proof_type: str = Field(..., min_length=1, description="财产证明类型")
@@ -73,8 +73,8 @@ class LoanApplicationCreate(BaseModel):
     @classmethod
     def validate_loan_amount(cls, v: float) -> float:
         """验证贷款金额"""
-        if v <= 0:
-            raise ValueError('贷款申请金额必须大于0')
+        if v < 0:
+            raise ValueError('贷款申请金额不能为负数')
         return v
 
     class Config:

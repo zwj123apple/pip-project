@@ -1,0 +1,359 @@
+import { useState, useEffect } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Menu, 
+  X, 
+  Bot, 
+  MessageSquare, 
+  History, 
+  User, 
+  Settings, 
+  LogOut,
+  Sun,
+  Moon,
+  Wifi,
+  WifiOff
+} from 'lucide-react';
+import { useAuth, useAuthActions } from '@/store/authStore';
+import { useConnection } from '@/store/chatStore';
+import { toast } from 'react-hot-toast';
+import clsx from 'clsx';
+
+const AppLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true';
+  });
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { logout } = useAuthActions();
+  const connection = useConnection();
+
+  // 应用暗色模式
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
+
+  // 导航菜单配置
+  const navigation = [
+    {
+      name: '对话',
+      href: '/chat',
+      icon: MessageSquare,
+      current: location.pathname.startsWith('/chat'),
+    },
+    {
+      name: '会话管理',
+      href: '/sessions',
+      icon: History,
+      current: location.pathname === '/sessions',
+    },
+  ];
+
+  const userNavigation = [
+    {
+      name: '个人资料',
+      href: '/profile',
+      icon: User,
+    },
+    {
+      name: '设置',
+      href: '/settings',
+      icon: Settings,
+    },
+  ];
+
+  // 处理注销
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth/login');
+      toast.success('已安全退出');
+    } catch (error) {
+      console.error('注销失败:', error);
+      toast.error('注销失败');
+    }
+  };
+
+  // 切换暗色模式
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // 获取连接状态图标和颜色
+  const getConnectionStatus = () => {
+    switch (connection.status) {
+      case 'connected':
+        return { icon: Wifi, color: 'text-green-500', text: '已连接' };
+      case 'connecting':
+        return { icon: Wifi, color: 'text-yellow-500', text: '连接中...' };
+      case 'error':
+        return { icon: WifiOff, color: 'text-red-500', text: '连接错误' };
+      default:
+        return { icon: WifiOff, color: 'text-gray-400', text: '未连接' };
+    }
+  };
+
+  const connectionStatus = getConnectionStatus();
+  const ConnectionIcon = connectionStatus.icon;
+
+  return (
+    <div className={clsx('h-screen flex bg-gray-50', darkMode && 'dark')}>
+      {/* 移动端侧边栏遮罩 */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 flex z-40 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div 
+            className="fixed inset-0 bg-gray-600 bg-opacity-75"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+          
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white dark:bg-gray-800">
+            {/* 关闭按钮 */}
+            <div className="absolute top-0 right-0 -mr-12 pt-2">
+              <button
+                type="button"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-6 w-6 text-white" />
+              </button>
+            </div>
+
+            {/* 侧边栏内容 */}
+            <SidebarContent 
+              navigation={navigation}
+              userNavigation={userNavigation}
+              user={user}
+              connectionStatus={connectionStatus}
+              ConnectionIcon={ConnectionIcon}
+              darkMode={darkMode}
+              onToggleDarkMode={toggleDarkMode}
+              onLogout={handleLogout}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 桌面端侧边栏 */}
+      <div className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-64">
+          <SidebarContent 
+            navigation={navigation}
+            userNavigation={userNavigation}
+            user={user}
+            connectionStatus={connectionStatus}
+            ConnectionIcon={ConnectionIcon}
+            darkMode={darkMode}
+            onToggleDarkMode={toggleDarkMode}
+            onLogout={handleLogout}
+          />
+        </div>
+      </div>
+
+      {/* 主内容区域 */}
+      <div className="flex flex-col w-0 flex-1 overflow-hidden">
+        {/* 顶部导航栏 */}
+        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          {/* 移动端菜单按钮 */}
+          <button
+            type="button"
+            className="px-4 border-r border-gray-200 dark:border-gray-700 text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
+          {/* 标题和面包屑 */}
+          <div className="flex-1 px-4 flex justify-between">
+            <div className="flex-1 flex items-center">
+              <h1 className="text-lg font-medium text-gray-900 dark:text-white">
+                {navigation.find(item => item.current)?.name || 'AI Chat'}
+              </h1>
+            </div>
+
+            {/* 连接状态指示器 */}
+            <div className="flex items-center space-x-4">
+              <div className={clsx(
+                'flex items-center space-x-2 px-3 py-1 rounded-full text-sm',
+                connection.status === 'connected' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : connection.status === 'connecting'
+                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+              )}>
+                <ConnectionIcon className="h-4 w-4" />
+                <span className="hidden sm:block">{connectionStatus.text}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 主内容 */}
+        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+          <div className="h-full">
+            {children || <Outlet />}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+// 侧边栏内容组件
+const SidebarContent = ({
+  navigation,
+  userNavigation,
+  user,
+  connectionStatus,
+  ConnectionIcon,
+  darkMode,
+  onToggleDarkMode,
+  onLogout
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <div className="flex flex-col flex-grow bg-white dark:bg-gray-800 pt-5 pb-4 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
+      {/* Logo */}
+      <div className="flex items-center flex-shrink-0 px-4">
+        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+        <h1 className="ml-3 text-xl font-bold text-gray-900 dark:text-white">
+          AI Chat
+        </h1>
+      </div>
+
+      {/* 主导航 */}
+      <div className="mt-8 flex-grow flex flex-col">
+        <nav className="flex-1 px-2 space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href || 
+              (item.href !== '/' && location.pathname.startsWith(item.href));
+            
+            return (
+              <button
+                key={item.name}
+                onClick={() => navigate(item.href)}
+                className={clsx(
+                  'w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+                  isActive
+                    ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-100'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                )}
+              >
+                <item.icon
+                  className={clsx(
+                    'mr-3 flex-shrink-0 h-5 w-5',
+                    isActive
+                      ? 'text-indigo-500 dark:text-indigo-300'
+                      : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300'
+                  )}
+                />
+                {item.name}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* 用户区域 */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
+        {/* 连接状态 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <ConnectionIcon className={clsx('h-4 w-4', connectionStatus.color)} />
+            <span>{connectionStatus.text}</span>
+          </div>
+          
+          {/* 暗色模式切换 */}
+          <button
+            onClick={onToggleDarkMode}
+            className="p-1 rounded-md text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors"
+            title={darkMode ? '切换到亮色模式' : '切换到暗色模式'}
+          >
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
+
+        {/* 用户信息 */}
+        <div className="flex items-center mb-3">
+          <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user.username}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-white font-medium text-sm">
+                {user?.username?.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="ml-3 flex-1">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {user?.username}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {user?.email}
+            </p>
+          </div>
+        </div>
+
+        {/* 用户菜单 */}
+        <div className="space-y-1">
+          {userNavigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            
+            return (
+              <button
+                key={item.name}
+                onClick={() => navigate(item.href)}
+                className={clsx(
+                  'w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+                  isActive
+                    ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                )}
+              >
+                <item.icon
+                  className={clsx(
+                    'mr-3 flex-shrink-0 h-4 w-4',
+                    isActive
+                      ? 'text-gray-500 dark:text-gray-300'
+                      : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300'
+                  )}
+                />
+                {item.name}
+              </button>
+            );
+          })}
+
+          {/* 退出按钮 */}
+          <button
+            onClick={onLogout}
+            className="w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300 transition-colors"
+          >
+            <LogOut className="mr-3 flex-shrink-0 h-4 w-4" />
+            退出登录
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AppLayout;

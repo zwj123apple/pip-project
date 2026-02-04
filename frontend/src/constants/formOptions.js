@@ -5,6 +5,7 @@
 
 // 还款账户银行选项
 export const bankOptions = [
+  { value: "", label: "Please select your repay account bank!" },
   { value: "chinaBank", label: "中国银行" },
   { value: "industryBank", label: "工商银行" },
   { value: "businessBank", label: "招商银行" },
@@ -12,6 +13,7 @@ export const bankOptions = [
 
 // 贷款期限选项
 export const loanTermOptions = [
+  { value: "", label: "Please select your Loan Term!" },
   { value: "0.5", label: "6个月" },
   { value: "1", label: "1年" },
   { value: "2", label: "2年" },
@@ -24,6 +26,7 @@ export const loanTermOptions = [
 
 // 贷款目的选项
 export const loanPurposeOptions = [
+  { value: "", label: "Please choose your loan Purpose!" },
   { value: "credit", label: "信用贷款" },
   { value: "mortgage", label: "抵押贷款" },
   { value: "tax", label: "税贷" },

@@ -66,10 +66,12 @@
         <div class="form-section">
           <h3 class="section-title">Loan Information</h3>
           <el-form-item label="Loan Amount" prop="loanAmount">
-            <el-input
+            <el-input-number
               v-model="loanForm.loanAmount"
-              placeholder=""
-              @input="handleLoanAmountInput"
+              :min="0"
+              :controls="false"
+              placeholder="Please enter loan amount"
+              style="width: 100%"
             />
           </el-form-item>
 
@@ -202,7 +204,7 @@ onMounted(async () => {
 });
 
 // 前端验证开关 - 设为false可以跳过前端验证，直接测试后端验证
-const ENABLE_FRONTEND_VALIDATION = true;
+const ENABLE_FRONTEND_VALIDATION = false;
 
 // 表单数据
 const loanForm = reactive({
@@ -262,7 +264,7 @@ const rules = {
       trigger: "blur",
     },
     {
-      pattern: /^[0-9A-Za-z]$/,
+      pattern: /^[0-9A-Za-z]{18}$/,
       message: "Uscc must contain only letters and numbers",
       trigger: "blur",
     },
@@ -306,9 +308,8 @@ const rules = {
       trigger: "blur",
     },
     {
-      pattern: /^\d+(\.\d{1,2})?$/,
-      message:
-        "Loan amount must be a valid positive number (e.g., 1000, 5000.50)",
+      type: "number",
+      message: "Loan amount must be a number",
       trigger: "blur",
     },
   ],
@@ -352,8 +353,10 @@ const createFormData = () => {
 
   // 添加表单字段（使用后端字段名）
   Object.keys(backendData).forEach((key) => {
-    if (backendData[key]) {
-      formData.append(key, backendData[key]);
+    const value = backendData[key];
+    // 修复：0 也应该被添加，只排除 null, undefined 和空字符串
+    if (value !== null && value !== undefined && value !== "") {
+      formData.append(key, value);
     }
   });
 
@@ -384,8 +387,13 @@ const handleError = (error) => {
     const errors = errorData.data?.errors;
 
     if (errors && Array.isArray(errors)) {
-      const errorMessages = errors.map((err) => err.msg).join("; ");
-      ElMessage.error(errorMessages || "提交失败，请稍后重试");
+      // 使用HTML换行符连接多个错误消息
+      const errorMessages = errors.map((err) => err.msg).join("<br>");
+      ElMessage.error({
+        message: errorMessages || "提交失败，请稍后重试",
+        dangerouslyUseHTMLString: true,
+        duration: 5000,
+      });
     } else {
       ElMessage.error(
         errorData.message || errorData.msg || "提交失败，请稍后重试",
@@ -437,11 +445,6 @@ const handleLoanPurposeChange = () => {
 // 处理账户号码输入，只允许数字
 const handleAccountNoInput = (value) => {
   loanForm.repayAccountNo = formatNumberInput(value, false);
-};
-
-// 处理贷款金额输入，只允许数字和小数点
-const handleLoanAmountInput = (value) => {
-  loanForm.loanAmount = formatNumberInput(value, true);
 };
 
 const handleFileChange = (file) => {
@@ -598,5 +601,10 @@ const handleSubmit = async () => {
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
+}
+
+/* el-input-number 文本左对齐 */
+:deep(.el-input-number .el-input__inner) {
+  text-align: left;
 }
 </style>

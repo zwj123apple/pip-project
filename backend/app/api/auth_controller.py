@@ -7,7 +7,7 @@ from app.schemas.user_schema import (
     UserResponseSchema
 )
 from app.services.auth_service import AuthService
-from app.utils.jwt_utils import token_required, user_type_required
+from app.utils.jwt_utils import token_required
 from app.utils.response import ApiResponse
 from app.utils.exceptions import (
     BaseException as CustomBaseException,
@@ -33,7 +33,6 @@ def login():
         return ApiResponse.success(
             data={
                 'access_token': result['access_token'],
-                'token_type': result['token_type'],
                 'user': UserResponseSchema.model_validate(
                     result['user']
                 ).model_dump()

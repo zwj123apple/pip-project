@@ -28,6 +28,7 @@ class Config:
     # JWT 配置
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    # JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=1)
     JWT_ALGORITHM = 'HS256'
 
     # 应用配置

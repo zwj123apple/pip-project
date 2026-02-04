@@ -45,5 +45,4 @@ class UserResponseSchema(BaseModel):
 class LoginResponseSchema(BaseModel):
     """登录响应模型"""
     access_token: str
-    token_type: str
     user: UserResponseSchema
